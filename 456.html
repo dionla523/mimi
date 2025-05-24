@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>今天有沒有遲到？</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    button { font-size: 1.2em; margin: 10px; padding: 10px 30px; }
+    #result { margin-top: 30px; font-size: 1.5em; }
+    #recordTableContainer { margin-top: 40px; display: none; }
+    table { margin: 0 auto; border-collapse: collapse; }
+    th, td { border: 1px solid #aaa; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h1>今天有沒有遲到？</h1>
+  <div id="date"></div>
+  <button onclick="setStatus('onTime')">準時</button>
+  <button onclick="setStatus('late')">遲到</button>
+  <div id="result"></div>
+
+  <div>
+    <button id="viewRecordsBtn">查看遲到紀錄</button>
+  </div>
+  <div id="recordTableContainer">
+    <h3>遲到紀錄</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody id="recordTableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function getToday() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    document.getElementById('date').innerText = '今天日期：' + getToday();
+
+    function showStatus() {
+      const today = getToday();
+      const status = localStorage.getItem('status-' + today);
+      const result = document.getElementById('result');
+      if (status === 'onTime') {
+        result.innerText = '你今天準時！👍';
+      } else if (status === 'late') {
+        result.innerText = '你今天遲到了！⏰';
+      } else {
+        result.innerText = '尚未紀錄今天的狀態。';
+      }
+    }
+
+    function setStatus(status) {
+      const today = getToday();
+      localStorage.setItem('status-' + today, status);
+      showStatus();
+    }
+
+    // 查看紀錄功能
+    const viewRecordsBtn = document.getElementById('viewRecordsBtn');
+    const recordTableContainer = document.getElementById('recordTableContainer');
+    const recordTableBody = document.getElementById('recordTableBody');
+
+    viewRecordsBtn.addEventListener('click', () => {
+      // 取得所有 localStorage 的遲到紀錄
+      const records = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('status-')) {
+          const date = key.replace('status-', '');
+          const status = localStorage.getItem(key);
+          records.push({ date, status });
+        }
+      }
+      // 依日期排序（新到舊）
+      records.sort((a, b) => b.date.localeCompare(a.date));
+      // 清空表格
+      recordTableBody.innerHTML = '';
+      // 填入資料
+      if (records.length === 0) {
+        recordTableBody.innerHTML = '<tr><td colspan="2">尚無紀錄</td></tr>';
+      } else {
+        for (const rec of records) {
+          let statusText = rec.status === 'onTime' ? '準時' : (rec.status === 'late' ? '遲到' : rec.status);
+          recordTableBody.innerHTML += `<tr><td>${rec.date}</td><td>${statusText}</td></tr>`;
+        }
+      }
+      // 顯示/隱藏表格
+      recordTableContainer.style.display = recordTableContainer.style.display === 'none' ? 'block' : 'none';
+    });
+
+    showStatus();
+  </script>
+</body>
+</html>
